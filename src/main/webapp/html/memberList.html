@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>회원리스트페이지(memberList.html)</title>
+	<style>
+		span {
+			display: block;
+			padding: 3px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="show"></div>
+	<form action="../memberList.do" method="post">
+		<input type="text" name="id" value="10">
+		<input type="text" name="name"=value="Choi">
+		<input type="submit">
+	</form>
+	<script>
+		//Ajax => 비동기방식 처리(XMLHttpRequest())
+		var xhtp = new XMLHttpRequest();
+		xhtp.open('get', '../memberList.do')
+		xhtp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhtp.send(`id=1&name=hong&score=80`);
+		xhtp.onload = function () {
+			var show = document.getElementById('show');
+			console.log(xhtp.responseText);
+			var data = JSON.parse(xhtp.responseText);
+			data.forEach(function (member) {
+				var span = document.createElement('span');
+				span.innerText = member.id + '-' + member.name;
+
+				show.appendChild(span);
+			});
+
+		}
+	</script>
+</body>
+
+</html>

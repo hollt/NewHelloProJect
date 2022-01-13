@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
+	<style>
+		#commentList>div {
+			border: 1px solid grey;
+		}
+
+		#commentList>div>strong,
+		#commentList>div>input {
+			margin: 3px;
+		}
+	</style>
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			loadCommentList();
+		});
+		//목록을 조회하고 화면 출력.
+		function loadCommentList() {
+			var xhtp = new XMLHttpRequest(); //Ajax 호출
+			//edu/comment/comment.html
+			// localost/edu/commentServ.do?cmd=selectAll  ?뒤가 파라미터
+			xhtp.open('get', '../commentServ.do?cmd=selectAll') //조회할땐 Get방식 , 
+			xhtp.send();
+			xhtp.onload = loadCommentResult;
+		}
+		//목록조회하는 콜백함수
+		function loadCommentResult(e) { // (e)이벤트값
+			console.log(e.currentTarget.responseText);
+			var result = JSON.parse(e.currentTarget.responseText); //json -> obj 파싱
+
+			var commentList = document.getElementById('commentList');
+			result.forEach(function (item) {
+
+				var commentDiv = makeCommentView(item)
+				commentList.appendChild(commentDiv);
+			});
+		}
+		//한건 생성
+		function makeCommentView(comment) { //{id:? , name:?, content:?}
+			var div = document.createElement('div');
+			div.setAttribute('cid', comment.id);
+			div.setAttribute('cname',comment.name);
+			div.setAttribute('ctent',comment.content);
+			div.setAttribute('id',comment.id);
+			
+			
+			//var strong = document.createElement('strong');
+			//var name = document.createTextNode(comment.name); //수정
+			//var text = document.createTextNode(comment.content); //수정
+			//var input = document.createElement('input');
+			//input.setAttribute('type', 'button');
+			//input.setAttribute('value', '수정');
+			//input.onclick = viewUpdateForm;
+			//strong.appendChild(name);
+			//div.append(strong, text, input);
+
+			var str = '<strong>' + comment.name + '</strong>' + comment.content +
+				'<input type="button" value ="수정" onclick ="viewUpdateForm('+comment+')">';
+
+			div.innerHTML = str;
+
+			return div;
+		}
+
+		function viewUpdateForm(id) {
+			var commentDiv = document.getElementById(id)
+			var updateFormDiv = document.getElementById('commentUpdate'); //div
+			updateFormDiv.style.display='block';
+			
+			document.updateForm.id.value = commentDiv.getAttribute('cid');
+			document.updateForm.name.value = commentDiv.getAttribute('cname');
+			document.updateForm.content.value=commentDiv.getAttribute('ctent');
+			
+			commentDiv.after(updateFormDiv);
+			document.getElementById('commentAdd').Style.display= 'none';
+			
+		}
+
+
+		//글등록 기능.
+		function addComment() {
+			console.log(document.forms[0]);
+			console.log(document.forms[0].elements[0].value);
+			console.log(document.forms[0].elements[1].value);
+			console.log(document.addForm.name.value);
+			var name = document.addForm.name.value;
+			var content = document.addForm.content.value;
+			//사용자의 입력값이 null인지 체크해서 입력을 안했으면 입력하라고 알려주고
+			//결과값을 가지고와서 화면에 추가.
+
+			if (name == '' || content == '') {
+				window.alert("필수값을 입력하세요");
+				return;
+			}
+
+			//등록 ajax호출
+			var xhtp = new XMLHttpRequest();
+			xhtp.open('post', '../commentServ.do')
+			xhtp.setRequestHeader("Content-type",
+				"application/x-www-form-urlencoded");
+			xhtp.send(`cmd=insert&name=${name}&content=${content}`);
+			xhtp.onload = addResult;
+
+			//등록콜백함수
+			function addResult(e) {
+				console.log(xhtp.responseText);
+				var result = JSON.parse(xhtp.responseText);
+				if (result.retCode == 'Success') {
+					var commentDiv = makeCommentView(result.retVal);
+					//{id:?,name=?,content=?}
+					document.getElementById('commentList').append(commentDiv);
+
+				} else {
+					window.alert(result.retVal);
+				}
+				//입력화면 초기화
+				document.addForm.name.value = "";
+				document.addForm.content.value = "";
+			}
+		}
+	</script>
+</head>
+
+<body>
+	<div id="commentList"></div>
+	<!--댓글등록  -->
+	<div id="commentAdd">
+		<form action="" method="get" name="addForm">
+			이름:<input type="text" name="name" size="10"><br> 내용:
+			<textarea name="content" cols="20" rows="2"></textarea>
+			<br> <input type="button" value="등록" onclick="addComment()">
+		</form>
+	</div>
+	<!-- 댓글수정 -->
+	<div id="commentUpdate" style="display: none;">
+	<form action="" method="get" name="updateForm">
+		<input type="hidden" name="id"> 
+		이름: <input type="text" name="name" size="10"><br> 
+		내용:<textarea name="content" cols="20" rows="2"></textarea><br>
+		<input type="button" value="변경" onclick="updateComment()">
+		<input type="button" value="취소" onclick="cancelUpdate()">
+	</form>
+	</div>
+</body>
+
+</html>
